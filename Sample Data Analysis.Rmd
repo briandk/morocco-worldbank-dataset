@@ -119,7 +119,7 @@ clean_na_values <- function (data_to_clean) {
   return (data_to_clean)
 }
 
-world_bank_data %<>% clean_na_values()
+# world_bank_data %<>% clean_na_values()
 ```
 
 If our code worked, we should be able to verify that R now recognizes NA values.
@@ -142,6 +142,22 @@ Using `apply()` here might not be the most performant option for doing NA replac
 2. Perform this computation once, up front, then cache the result. At the very least, we could accomplish this up-front computation/caching pattern by running the existing `apply()` code and saving the resulting dataframe as a `.Rda` file. In future runs of this code, we can then check whether that `.Rda` file exists, and if for some reason it doesn't, only then would we re-run the `apply()` code that generates it.
 
 But, there's also a third option: check whether our `apply()` code made any replacements in the first place.
+
+After poking around my NA-cleaning code, I started to wonder whether it was actually making any substitutions. So, I cobbled together a bit of a test. In the code of my `clean_na_values` function, I included an `na_accumulator`, which the inner function has access to via closure. If my replacement logic ever takes the `if` branch and actually replaces a text `"NA"` or `"N/A"` value, we append a `TRUE` to that vector. When the `apply()` function finishes, we can then check the length of the `na_accumulator` to see how many replacements the `apply` section made. In this case, the answer is zero. None.
+
+I could have just had a basic print statement print "NA substitution" each time, but I didn't want to risk littering the screen with all the possible NAs.
+
+So, assuming my code is working properly, this test seems to confirm that instead of replacing the matching logic or using caching, the best refactor might be to remove the `apply` section entirely. It's not making a single replacement, which means case 123 was untouched:
+
+```{r}
+world_bank_data[123, ] %>% 
+  select(
+    country.region,
+    country.region_code
+  ) %>% 
+  is.na()
+```
+
 
 
 ```{r}

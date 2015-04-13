@@ -256,8 +256,7 @@ world_bank_data &lt;- load_data()</code></pre>
   return (data_to_clean)
 }
 
-world_bank_data %&lt;&gt;% clean_na_values()</code></pre>
-<pre><code>## [1] 0</code></pre>
+# world_bank_data %&lt;&gt;% clean_na_values()</code></pre>
 <p>If our code worked, we should be able to verify that R now recognizes NA values.</p>
 <pre class="r"><code># All values should be TRUE, indicating they are NAs
 world_bank_data[123, ] %&gt;% 
@@ -277,6 +276,17 @@ world_bank_data[123, ] %&gt;%
 <li>Perform this computation once, up front, then cache the result. At the very least, we could accomplish this up-front computation/caching pattern by running the existing <code>apply()</code> code and saving the resulting dataframe as a <code>.Rda</code> file. In future runs of this code, we can then check whether that <code>.Rda</code> file exists, and if for some reason it doesn’t, only then would we re-run the <code>apply()</code> code that generates it.</li>
 </ol>
 <p>But, there’s also a third option: check whether our <code>apply()</code> code made any replacements in the first place.</p>
+<p>After poking around my NA-cleaning code, I started to wonder whether it was actually making any substitutions. So, I cobbled together a bit of a test. In the code of my <code>clean_na_values</code> function, I included an <code>na_accumulator</code>, which the inner function has access to via closure. If my replacement logic ever takes the <code>if</code> branch and actually replaces a text <code>&quot;NA&quot;</code> or <code>&quot;N/A&quot;</code> value, we append a <code>TRUE</code> to that vector. When the <code>apply()</code> function finishes, we can then check the length of the <code>na_accumulator</code> to see how many replacements the <code>apply</code> section made. In this case, the answer is zero. None.</p>
+<p>I could have just had a basic print statement print “NA substitution” each time, but I didn’t want to risk littering the screen with all the possible NAs.</p>
+<p>So, assuming my code is working properly, this test seems to confirm that instead of replacing the matching logic or using caching, the best refactor might be to remove the <code>apply</code> section entirely. It’s not making a single replacement, which means case 123 was untouched:</p>
+<pre class="r"><code>world_bank_data[123, ] %&gt;% 
+  select(
+    country.region,
+    country.region_code
+  ) %&gt;% 
+  is.na()</code></pre>
+<pre><code>##      country.region country.region_code
+## [1,]           TRUE                TRUE</code></pre>
 <pre class="r"><code>complete.cases(world_bank_data)[122:124]</code></pre>
 <pre><code>## [1]  TRUE FALSE FALSE</code></pre>
 </div>
