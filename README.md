@@ -14,3 +14,7 @@ I conducted this analysis in [R][2], using `packrat` to manage and version any n
 
 [1]: https://finances.worldbank.org/dataset/World-Bank-Morocco-Citizen-Engagement-Nano-Survey-/tg37-mj88
 [2]: http://www.r-project.org/
+
+## How to View the Analysis
+
+The easiest way is to open `Sample_Data_Analysis.html`. You can also inspect the entire source in `Sample_Data_Analysis.Rmd`
