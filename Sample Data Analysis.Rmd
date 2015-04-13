@@ -29,6 +29,7 @@ library(readr)
 library(dplyr)
 library(xtable)
 library(knitr)
+library(stringr)
 ```
 
 
@@ -60,7 +61,7 @@ From the [World Bank's website][2]:
 
 > This dataset contains raw response data to a nano-survey that was conducted in Morocco on the right to access to information and the right to petition and motion the government. A nano-survey is an innovative technology that extends a brief survey to a random sampling of internet users. Note: "NA" or "N/A" indicates "No Answer." Sub-national location data is available for 2/3 of survey recipients. 54,441 random internet users in Morocco were exposed to a portion of this survey, with 15,020 respondents providing at least partial responses.
 
-### Checking that the Data are Tabular
+### Checking that the Data Match the Provider's Claims
 
 We should make sure our data looks OK after all that loading. Sometimes anything from a misplaced comma to a poorly-terminated line can really junk up the works, so let's check by trying to inspect the first few rows.
 
@@ -75,12 +76,75 @@ Good. The tabular structure came through alright. What about the overall structu
 str(world_bank_data)
 ```
 
-Also good! We've 
+Also good! We've showing the same 54,441 cases noted by the data provider. 
 
-What about cases?
+## Preliminary Data Cleaning
+
+We know from the provider's description that some NAs will be encoded as either `NA` or `N/A`, and it might be wise to replace those character values with R's built-in `NA` value.
+
+As an example, case 123 has some NA values in it:
 
 ```{r}
-world_bank_data[123, 1:5]
+world_bank_data[123, ] %>% 
+  select(
+    country.region,
+    country.region_code
+  )
+```
+
+So, let's use `apply()` to replace those character values with built-in `NA` values. 
+
+```{r}
+clean_na_values <- function (data_to_clean) {
+  na_accumulator <- NULL
+  replace_na_strings_with_na_values <- function (x) {
+    if (x %in% c("NA", "N/A")) {
+      x <- NA
+      print("Found an NA!")
+      na_accumulator <- c(na_accumulator, TRUE)
+    }
+    return (x)
+  }
+  data_to_clean %<>%
+    apply(
+      X = .,
+      MARGIN = c(1, 2),
+      FUN = replace_na_strings_with_na_values
+    ) %>% 
+    as.data.frame() %>% 
+    tbl_df()
+  print(
+    length(na_accumulator)
+  )
+  return (data_to_clean)
+}
+
+world_bank_data %<>% clean_na_values()
+```
+
+If our code worked, we should be able to verify that R now recognizes NA values.
+
+```{r}
+# All values should be TRUE, indicating they are NAs
+world_bank_data[123, ] %>% 
+  select(
+    country.region,
+    country.region_code
+  ) %>% 
+  is.na()
+```
+
+## A Note on Data Cleaning Performance
+
+Using `apply()` here might not be the most performant option for doing NA replacement speedily. So, if speed is a crucial concern (and in some setups it can be), there are two non-mutually-exclusive options we might consider as first-order solutions for refactoring this code:
+
+1. Exploring whether optimized functions in the `stringr` library (such as `str_match` and `str_replace`) or other text libraries would make faster replacements in some of the NA-replacement logic.
+2. Perform this computation once, up front, then cache the result. At the very least, we could accomplish this up-front computation/caching pattern by running the existing `apply()` code and saving the resulting dataframe as a `.Rda` file. In future runs of this code, we can then check whether that `.Rda` file exists, and if for some reason it doesn't, only then would we re-run the `apply()` code that generates it.
+
+But, there's also a third option: check whether our `apply()` code made any replacements in the first place.
+
+
+```{r}
 complete.cases(world_bank_data)[122:124]
 ```
 

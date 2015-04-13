@@ -72,7 +72,12 @@ img {
 <li><a href="#introduction">Introduction</a><ul>
 <li><a href="#loading-extra-packages-for-this-analysis">Loading Extra Packages for this Analysis</a></li>
 <li><a href="#getting-the-data-from-the-worldbank">Getting the Data from the WorldBank</a></li>
-<li><a href="#checking-the-reasonability-of-the-data">Checking the Reasonability of the Data</a></li>
+<li><a href="#checking-the-reasonability-of-the-data">Checking the Reasonability of the Data</a><ul>
+<li><a href="#what-the-data-provider-says-the-data-should-look-like">What the data provider says the data should look like</a></li>
+<li><a href="#checking-that-the-data-match-the-providers-claims">Checking that the Data Match the Provider’s Claims</a></li>
+</ul></li>
+<li><a href="#preliminary-data-cleaning">Preliminary Data Cleaning</a></li>
+<li><a href="#a-note-on-data-cleaning-performance">A Note on Data Cleaning Performance</a></li>
 </ul></li>
 </ul>
 </div>
@@ -94,7 +99,8 @@ library(magrittr)
 library(readr)
 library(dplyr)
 library(xtable)
-library(knitr)</code></pre>
+library(knitr)
+library(stringr)</code></pre>
 </div>
 <div id="getting-the-data-from-the-worldbank" class="section level2">
 <h2>Getting the Data from the WorldBank</h2>
@@ -114,40 +120,16 @@ world_bank_data &lt;- load_data()</code></pre>
 </div>
 <div id="checking-the-reasonability-of-the-data" class="section level2">
 <h2>Checking the Reasonability of the Data</h2>
-<p>We should make sure our data looks OK after all that loading. First, did the column names come through OK?</p>
-<pre class="r"><code>names(world_bank_data)</code></pre>
-<pre><code>##  [1] &quot;time_utc&quot;                                       
-##  [2] &quot;time_pacific&quot;                                   
-##  [3] &quot;country&quot;                                        
-##  [4] &quot;country.region&quot;                                 
-##  [5] &quot;country.region_code&quot;                            
-##  [6] &quot;province.prefecture&quot;                            
-##  [7] &quot;city&quot;                                           
-##  [8] &quot;Location..Lat.Long.&quot;                            
-##  [9] &quot;age&quot;                                            
-## [10] &quot;age_group&quot;                                      
-## [11] &quot;gender&quot;                                         
-## [12] &quot;language&quot;                                       
-## [13] &quot;education&quot;                                      
-## [14] &quot;access_to_information_right_familiar&quot;           
-## [15] &quot;want_access&quot;                                    
-## [16] &quot;ease_of_access&quot;                                 
-## [17] &quot;want_access_how&quot;                                
-## [18] &quot;govt_info_interest_type&quot;                        
-## [19] &quot;govt_info_purpose_of_use&quot;                       
-## [20] &quot;govt_info_willingness_to_pay&quot;                   
-## [21] &quot;govt_info_how_much&quot;                             
-## [22] &quot;citizen_petition_motion_right_familiar&quot;         
-## [23] &quot;participate_in_govt&quot;                            
-## [24] &quot;participate_in_govt_how&quot;                        
-## [25] &quot;participate_in_govt_how_often&quot;                  
-## [26] &quot;participate_in_govt_online&quot;                     
-## [27] &quot;participate_in_govt_online_freq&quot;                
-## [28] &quot;participate_in_govt_online_response&quot;            
-## [29] &quot;participate_in_govt_online_process_satisfaction&quot;
-## [30] &quot;want_to_propose_govt_initiatives&quot;               
-## [31] &quot;answers&quot;                                        
-## [32] &quot;count&quot;</code></pre>
+<div id="what-the-data-provider-says-the-data-should-look-like" class="section level3">
+<h3>What the data provider says the data should look like</h3>
+<p>From the <a href="https://finances.worldbank.org/dataset/World-Bank-Morocco-Citizen-Engagement-Nano-Survey-/tg37-mj88">World Bank’s website</a>:</p>
+<blockquote>
+<p>This dataset contains raw response data to a nano-survey that was conducted in Morocco on the right to access to information and the right to petition and motion the government. A nano-survey is an innovative technology that extends a brief survey to a random sampling of internet users. Note: “NA” or “N/A” indicates “No Answer.” Sub-national location data is available for 2/3 of survey recipients. 54,441 random internet users in Morocco were exposed to a portion of this survey, with 15,020 respondents providing at least partial responses.</p>
+</blockquote>
+</div>
+<div id="checking-that-the-data-match-the-providers-claims" class="section level3">
+<h3>Checking that the Data Match the Provider’s Claims</h3>
+<p>We should make sure our data looks OK after all that loading. Sometimes anything from a misplaced comma to a poorly-terminated line can really junk up the works, so let’s check by trying to inspect the first few rows.</p>
 <pre class="r"><code>head(world_bank_data)[ ,1:4] %&gt;% 
   kable</code></pre>
 <table>
@@ -198,8 +180,7 @@ world_bank_data &lt;- load_data()</code></pre>
 </tr>
 </tbody>
 </table>
-<p>Seems like the <code>names()</code> output matches the column header’s on the World Bank’s website, which is a good start.</p>
-<p>What about the overall structure of the data?</p>
+<p>Good. The tabular structure came through alright. What about the overall structure of the data?</p>
 <pre class="r"><code>str(world_bank_data)</code></pre>
 <pre><code>## Classes 'tbl_df', 'tbl' and 'data.frame':    54441 obs. of  32 variables:
 ##  $ time_utc                                       : chr  &quot;04/05/2014 10:29:01 AM&quot; &quot;04/02/2014 04:00:29 PM&quot; &quot;03/30/2014 01:39:58 PM&quot; &quot;04/04/2014 10:32:43 PM&quot; ...
@@ -234,13 +215,68 @@ world_bank_data &lt;- load_data()</code></pre>
 ##  $ want_to_propose_govt_initiatives               : chr  &quot;yes&quot; &quot;yes&quot; &quot;yes&quot; &quot;yes&quot; ...
 ##  $ answers                                        : int  21 21 21 21 21 21 21 21 21 21 ...
 ##  $ count                                          : int  1 1 1 1 1 1 1 1 1 1 ...</code></pre>
-<p>What about cases?</p>
-<pre class="r"><code>world_bank_data[123, 1:5]</code></pre>
-<pre><code>## Source: local data frame [1 x 5]
+<p>Also good! We’ve showing the same 54,441 cases noted by the data provider.</p>
+</div>
+</div>
+<div id="preliminary-data-cleaning" class="section level2">
+<h2>Preliminary Data Cleaning</h2>
+<p>We know from the provider’s description that some NAs will be encoded as either <code>NA</code> or <code>N/A</code>, and it might be wise to replace those character values with R’s built-in <code>NA</code> value.</p>
+<p>As an example, case 123 has some NA values in it:</p>
+<pre class="r"><code>world_bank_data[123, ] %&gt;% 
+  select(
+    country.region,
+    country.region_code
+  )</code></pre>
+<pre><code>## Source: local data frame [1 x 2]
 ## 
-##                 time_utc           time_pacific country country.region
-## 1 04/08/2014 07:24:41 PM 04/08/2014 12:24:41 PM      MA             NA
-## Variables not shown: country.region_code (int)</code></pre>
+##   country.region country.region_code
+## 1             NA                  NA</code></pre>
+<p>So, let’s use <code>apply()</code> to replace those character values with built-in <code>NA</code> values.</p>
+<pre class="r"><code>clean_na_values &lt;- function (data_to_clean) {
+  na_accumulator &lt;- NULL
+  replace_na_strings_with_na_values &lt;- function (x) {
+    if (x %in% c(&quot;NA&quot;, &quot;N/A&quot;)) {
+      x &lt;- NA
+      print(&quot;Found an NA!&quot;)
+      na_accumulator &lt;- c(na_accumulator, TRUE)
+    }
+    return (x)
+  }
+  data_to_clean %&lt;&gt;%
+    apply(
+      X = .,
+      MARGIN = c(1, 2),
+      FUN = replace_na_strings_with_na_values
+    ) %&gt;% 
+    as.data.frame() %&gt;% 
+    tbl_df()
+  print(
+    length(na_accumulator)
+  )
+  return (data_to_clean)
+}
+
+world_bank_data %&lt;&gt;% clean_na_values()</code></pre>
+<pre><code>## [1] 0</code></pre>
+<p>If our code worked, we should be able to verify that R now recognizes NA values.</p>
+<pre class="r"><code># All values should be TRUE, indicating they are NAs
+world_bank_data[123, ] %&gt;% 
+  select(
+    country.region,
+    country.region_code
+  ) %&gt;% 
+  is.na()</code></pre>
+<pre><code>##      country.region country.region_code
+## [1,]           TRUE                TRUE</code></pre>
+</div>
+<div id="a-note-on-data-cleaning-performance" class="section level2">
+<h2>A Note on Data Cleaning Performance</h2>
+<p>Using <code>apply()</code> here might not be the most performant option for doing NA replacement speedily. So, if speed is a crucial concern (and in some setups it can be), there are two non-mutually-exclusive options we might consider as first-order solutions for refactoring this code:</p>
+<ol style="list-style-type: decimal">
+<li>Exploring whether optimized functions in the <code>stringr</code> library (such as <code>str_match</code> and <code>str_replace</code>) or other text libraries would make faster replacements in some of the NA-replacement logic.</li>
+<li>Perform this computation once, up front, then cache the result. At the very least, we could accomplish this up-front computation/caching pattern by running the existing <code>apply()</code> code and saving the resulting dataframe as a <code>.Rda</code> file. In future runs of this code, we can then check whether that <code>.Rda</code> file exists, and if for some reason it doesn’t, only then would we re-run the <code>apply()</code> code that generates it.</li>
+</ol>
+<p>But, there’s also a third option: check whether our <code>apply()</code> code made any replacements in the first place.</p>
 <pre class="r"><code>complete.cases(world_bank_data)[122:124]</code></pre>
 <pre><code>## [1]  TRUE FALSE FALSE</code></pre>
 </div>

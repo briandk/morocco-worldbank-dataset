@@ -220,6 +220,11 @@ Source: CRAN
 Version: 0.6.2
 Hash: cdde0cfa0f52cffeaca23a11a3899779
 
+Package: xtable
+Source: CRAN
+Version: 1.7-4
+Hash: 7b30b5ca6c7ae80c4f916502e3ad0237
+
 Package: yaml
 Source: CRAN
 Version: 2.1.13
