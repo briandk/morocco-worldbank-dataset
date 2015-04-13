@@ -18,18 +18,18 @@ Before we get into analyzing this data, we'll need to do some housekeeping first
 2. Load the CSV data into R
 3. Check whether the data looks reasonable
 4. Perform some data cleaning
+5. Note some performance issues with the data cleaning and explore how we can improve them
+6. Inspect the data for complete cases
 
 ## Loading Extra Packages for this Analysis
 
 ```{r, message=FALSE}
 library(httr)
-library(jsonlite)
 library(magrittr)
 library(readr)
 library(dplyr)
-library(xtable)
 library(knitr)
-library(stringr)
+library(ggplot2)
 ```
 
 
@@ -158,11 +158,38 @@ world_bank_data[123, ] %>%
   is.na()
 ```
 
+## Inspecting the Data for Complete Cases
 
+We know there's a high degree of missingness in the data, so it seems reasonable to ask how many observations are free of `NA`s.
 
 ```{r}
-complete.cases(world_bank_data)[122:124]
+world_bank_data %>% 
+  complete.cases() %>% 
+  which()
 ```
+
+Hmm. That's actually...curious. Hang on a sec, let's visualize those complete cases again.
+
+```{r}
+get_data_for_complete_cases_plot <- function (input_data) {
+  return(
+    world_bank_data %>% 
+      mutate(is_complete_case = complete.cases(input_data)) %>% 
+      mutate(case_id = 1:dim(input_data)[1])
+  )
+}
+
+p <- ggplot(
+  aes(
+    x = is_complete_case,
+    y = case_id
+  ),
+  data = get_data_for_complete_cases_plot(world_bank_data)
+)
+p <- p + geom_point()
+print(p)
+```
+
 
 
 
