@@ -10,16 +10,17 @@ output:
     toc: true
 ---
 
-# Introduction
+# Overview
 
-Before we get into analyzing this data, we'll need to do some housekeeping first. In what follows, we'll:
+In what follows, I'll lead you through a very preliminary look at the [World Bank Morocco Citizen Engagement Nano-Survey][2]. Here's a roadmap of where we'll go and what we'll do
 
 1. Load some non-base R packages we'll be using
 2. Load the CSV data into R
 3. Check whether the data looks reasonable
 4. Perform some data cleaning
 5. Note some performance issues with the data cleaning and explore how we can improve them
-6. Inspect the data for complete cases
+6. Inspect and visualize the data for complete cases
+7. Generate some questions to guide future work
 
 ## Loading Extra Packages for this Analysis
 
@@ -190,7 +191,10 @@ p <- p + geom_point()
 print(p)
 ```
 
+Now, it may seem a bit silly to have done this visualization, but I would argue it's actually useful, if unusual. This visualization confirms, in one glance, several things:
 
+1. **Complete cases comprise fewer than 1% of all the data here.** Yes, we could have calculated that just from the length of the `complete.cases()` output, but this visualization gives us a clear reminder of just how small that fraction is. Actually, the faction is even smaller than what we see, because ggplot2's default point size is so fat with respect to the scales of this graphic that the graphic visually overstates the fraction of complete cases.
+2. **All the complete cases cluster in the first lines of the dataset**. We couldn't have known that from the author's provided description of the dataset. We might have discovered it by digging through the text output of `complete.cases()`, 
 
 
 
